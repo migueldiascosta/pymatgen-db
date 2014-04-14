@@ -1,6 +1,7 @@
 var currentData = [];
 var properties = [];
 var collection_keys = [];
+var plot;
 
 function displayData() {
     var i, j, checkedValue, props, oTable, data, row;
@@ -13,6 +14,7 @@ function displayData() {
             $("#result-tree").show();
             $("#num-results").show();
             $("#result-plot").hide();
+	    $('#result-plot-x-label').hide();
             $("#results-table-div").hide();
         }
         catch (e) {
@@ -22,8 +24,12 @@ function displayData() {
     else if (checkedValue == "plot" && currentData.length > 0) {
         try {
 	    $("#result-plot").hide();
+	    $('#result-plot-x-label').hide();
             visualize_plot(currentData);
             $("#result-plot").show();
+	    $('#result-plot-x-label').html(properties[0]);
+	    $('#result-plot-x-label').css("margin-top", plot.height());
+	    $('#result-plot-x-label').show();
             $("#num-results").show();
             $("#result-tree").hide();
             $("#results-table-div").hide();
@@ -82,6 +88,7 @@ function displayData() {
         $("#num-results").show();
         $("#result-tree").hide();
         $("#result-plot").hide();
+	$('#result-plot-x-label').hide();
     }
 }
 
@@ -115,6 +122,7 @@ function doQuery() {
 		      // check if it makes sense to plot
                       $("#plot-option").hide();
 		      $("#result-plot").hide();
+		      $('#result-plot-x-label').hide();
                       if (typeof(currentData[0][properties[0]]) == 'number') {
                           for (j = 1; j < properties.length; j++) {
                               if (typeof(currentData[0][properties[j]]) == 'number') {
@@ -191,7 +199,7 @@ function visualize_plot(json) {
     };
     
     try {
-	$.plot($("#result-plot"), alldata, options);
+	plot = $.plot($("#result-plot"), alldata, options);
     }
     catch (e) {
 	alert("Sorry error in plot, please correct and try again: " + e.message);
