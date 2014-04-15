@@ -45,7 +45,7 @@ function displayData() {
     }
     else if (currentData.length > 0) {
         props = [];
-        for (j = 0; j < properties.length; j++) {
+        for (j = 0; j < properties.length - 1; j++) { // last property is additional task_id
             props.push({ "sTitle": properties[j]});
         }
         $("#results-table-div").empty();
@@ -82,7 +82,7 @@ function displayData() {
         data = [];
         for (i = 0; i < currentData.length; i++) {
             row = [];
-            for (j = 0; j < properties.length; j++) {
+            for (j = 0; j < properties.length - 1; j++) { // last property is additional task_id
                 row.push(JSON.stringify(currentData[i][properties[j]], null, "    "));
             }
             data.push(row);
@@ -115,7 +115,7 @@ function doQuery() {
                type: "POST",
                data: {
                    criteria: crit,
-                   properties: prop,
+                   properties: prop + " task_id", // add task_id to get entry from plot points (other way?)
                    limit: limit
                }
            }
@@ -194,7 +194,8 @@ function visualize_plot(json, xvar) {
     var values = [];
     var series = [];
     var alldata = [];
-    
+    var task_id = 0;
+
     for (j = 0; j < numeric.length; j++) {
 	values = [];
 
@@ -212,6 +213,10 @@ function visualize_plot(json, xvar) {
     }
     
     var options = {
+	grid: {
+	    hoverable: true,
+	    clickable: true
+	},
 	series: {
             lines: { show: true },
             points: { show: true }
@@ -220,6 +225,19 @@ function visualize_plot(json, xvar) {
     
     try {
 	plot = $.plot($("#result-plot"), alldata, options);
+
+	$("#result-plot").bind("plotclick", function (event, pos, item) {
+	    if (item) {
+		task_id = currentData[item.dataIndex][properties[properties.length-1]];
+		window.open("entry/"+task_id);
+	    }
+	});
+
+	$("#result-plot").bind("plothover", function (event, pos, item) {
+	    if (item) {
+		// tooltip with summary?
+	    }
+	});
     }
     catch (e) {
 	alert("Sorry error in plot, please correct and try again: " + e.message);
