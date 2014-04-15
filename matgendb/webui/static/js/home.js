@@ -1,10 +1,12 @@
 var currentData = [];
 var properties = [];
 var collection_keys = [];
+
 var plot;
+var numeric = [];
 
 function displayData() {
-    var i, j, checkedValue, props, oTable, data, row;
+    var i, j, checkedValue, props, oTable, data, row, xvar;
 
     checkedValue = $('input[name=display]').filter(':checked').val();
     $("#num-results").text("Number of results = " + currentData.length);
@@ -25,9 +27,12 @@ function displayData() {
         try {
 	    $("#result-plot").hide();
 	    $('#result-plot-x-label').hide();
-            visualize_plot(currentData);
-            $("#result-plot").show();
-	    $('#result-plot-x-label').html(properties[0]);
+
+	    xvar = $("#plot-vs").val();
+	    visualize_plot(currentData, xvar);
+
+	    $("#result-plot").show();
+	    $('#result-plot-x-label').html(xvar == -1 ? "index" : properties[xvar]);
 	    $('#result-plot-x-label').css("margin-top", plot.height());
 	    $('#result-plot-x-label').show();
             $("#num-results").show();
@@ -94,6 +99,7 @@ function displayData() {
 
 function doQuery() {
     var j, crit, prop, opts, limit;
+    var plot_options = "";
     crit = $("#criteria-input").val();
     prop = $("#properties-input").val();
     limit = $("#limit-slider").slider("value");
@@ -123,15 +129,23 @@ function doQuery() {
                       $("#plot-option").hide();
 		      $("#result-plot").hide();
 		      $('#result-plot-x-label').hide();
-                      if (typeof(currentData[0][properties[0]]) == 'number') {
-                          for (j = 1; j < properties.length; j++) {
-                              if (typeof(currentData[0][properties[j]]) == 'number') {
-                                  // there's at least one property to plot against the first
-                                  $("#plot-option").show();
-				  break;
-                              }
+		      numeric = [];
+                      for (j = 0; j < properties.length; j++) {
+                          if (typeof(currentData[0][properties[j]]) == 'number') {
+			      numeric.push(j)
                           }
                       }
+
+		      // plot options
+		      if (numeric.length > 0) {
+			  $("#plot-option").show();
+			  $("#plot-vs").empty();
+			  plot_options = "<option value='-1'>index</option>";
+			  for (j = 0; j < numeric.length; j++)
+			      plot_options += "<option value='" + numeric[j] + "'>" + properties[numeric[j]] + "</option>";
+			  $("#plot-vs").html(plot_options);
+			  $("#plot-vs").show();
+		      }
 
                       displayData();
 
@@ -175,19 +189,25 @@ function visualize(json) {
     regEvents();
 }
 
-function visualize_plot(json) {
-    
+function visualize_plot(json, xvar) {
+    var j, x, y;
+    var values = [];
+    var series = [];
     var alldata = [];
     
-    for (j = 1; j < properties.length; j++) {
+    for (j = 0; j < numeric.length; j++) {
 	values = [];
+
+	if (numeric[j] == xvar)
+	    continue;
+
 	for (i = 0; i < currentData.length; i++) {
-            x = currentData[i][properties[0]];
-            y = currentData[i][properties[j]];
-            values.push([x,y]);
+	    x = (xvar == -1 ? i : currentData[i][properties[xvar]]);
+            y = currentData[i][properties[numeric[j]]];
+	    values.push([x,y]);
 	}
 	values.sort(function(a,b){return a[0]-b[0]});
-	series = { label: properties[j], data: values };
+	series = { label: properties[numeric[j]], data: values };
 	alldata.push(series);
     }
     
@@ -327,6 +347,10 @@ window.onload = function () {
     });
 
     $("input[name=display]").click(function () {
+        displayData();
+    });
+
+    $("select[name=display]").change(function () {
         displayData();
     });
 
